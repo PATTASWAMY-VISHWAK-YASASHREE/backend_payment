@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Razorpay Payment Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; text-align: center; }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #3399cc;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover { background: #2688bb; }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Razorpay Payment Test</h1>
+        
+        <div class="form-group">
+            <label>API URL:</label>
+            <input type="url" id="apiUrl" value="https://your-app.onrender.com" placeholder="Your Render API URL">
+        </div>
+        
+        <div class="form-group">
+            <label>Razorpay Key ID:</label>
+            <input type="text" id="keyId" placeholder="rzp_test_your_key_id">
+        </div>
+        
+        <div class="form-group">
+            <label>User ID:</label>
+            <input type="text" id="userId" value="test_user_123" placeholder="User identifier">
+        </div>
+        
+        <div class="form-group">
+            <label>Amount (₹):</label>
+            <input type="number" id="amount" value="500" min="1" placeholder="Amount in INR">
+        </div>
+        
+        <div class="form-group">
+            <label>Category:</label>
+            <select id="category">
+                <option value="Shopping">Shopping</option>
+                <option value="Food">Food</option>
+                <option value="Transport">Transport</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Description:</label>
+            <input type="text" id="description" value="Test Payment" placeholder="Payment description">
+        </div>
+        
+        <button onclick="testPayment()">💳 Make Payment</button>
+        
+        <div id="status" class="status"></div>
+    </div>
+
+    <script src="payment-sdk.js"></script>
+    <script>
+        let paymentSDK;
+
+        function initializeSDK() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const keyId = document.getElementById('keyId').value;
+            const userId = document.getElementById('userId').value;
+
+            if (!apiUrl || !keyId) {
+                showStatus('Please fill in API URL and Razorpay Key ID', 'error');
+                return false;
+            }
+
+            paymentSDK = new RazorpayPaymentSDK({
+                apiUrl: apiUrl,
+                razorpayKeyId: keyId,
+                userId: userId
+            });
+
+            return true;
+        }
+
+        function testPayment() {
+            if (!initializeSDK()) return;
+
+            const amount = parseFloat(document.getElementById('amount').value);
+            const category = document.getElementById('category').value;
+            const description = document.getElementById('description').value;
+
+            if (!amount || amount <= 0) {
+                showStatus('Please enter a valid amount', 'error');
+                return;
+            }
+
+            showStatus('Initiating payment...', 'info');
+
+            paymentSDK.makePayment({
+                amount: amount,
+                category: category,
+                description: description
+            }, {
+                companyName: 'Test Company',
+                themeColor: '#3399cc',
+                user: {
+                    name: 'Test User',
+                    email: 'test@example.com',
+                    phone: '9876543210'
+                },
+                onSuccess: (result) => {
+                    showStatus(`✅ Payment Successful! Transaction ID: ${result.transaction.id}`, 'success');
+                    console.log('Payment Success:', result);
+                },
+                onError: (error) => {
+                    showStatus(`❌ Payment Failed: ${error.message}`, 'error');
+                    console.error('Payment Error:', error);
+                },
+                onCancel: () => {
+                    showStatus('🚪 Payment was cancelled by user', 'error');
+                }
+            });
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+        }
+
+        // Auto-fill current timestamp for unique user ID
+        document.getElementById('userId').value = 'test_user_' + Date.now();
+    </script>
+</body>
+</html>
